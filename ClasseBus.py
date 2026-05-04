@@ -31,11 +31,10 @@ def replace_black_with_color(image, new_color):
 
 
 class Bus:
-        def __init__(self, taille: int, direction: str, color_id: int, chauffeur: bool,image , x: int, y: int):
+        def __init__(self, taille: int, direction: str, couleur: int, image , x: int, y: int , visite: bool, charge: int, capacite: int):
             self.taille = taille
             self.direction = direction  # U, D, L, R
-            self.couleur =  COLORS[color_id]
-            self.chauffeur = chauffeur
+            self.couleur =  COLORS[couleur]
             self.x = x
             self.y = y
             # image coloré une seul fois :
@@ -43,10 +42,13 @@ class Bus:
             self.dragging = False
             self.offset_x = 0
             self.offset_y = 0
+            self.visite = visite
+            self.charge = charge
+            self.capacite = capacite
 
 
         def __repr__(self):
-            return f"Bus(taille={self.taille}, direction='{self.direction}', couleur={self.couleur}, chauffeur={self.chauffeur}, x={self.x}, y={self.y})"
+            return f"Bus(taille={self.taille}, direction='{self.direction}', couleur={self.couleur}, chauffeur={self.chauffeur}, x={self.x}, y={self.y},visite={self.visite}, charge={self.charge})"
 
 
 

@@ -2,10 +2,16 @@
 import  pygame
 from grille import grid, cell_size, offset_x, offset_y, draw_grid
 from ClasseBus import Bus, draw_bus , draw_image,get_rect, collides , in_bounds
+from lecture import lire_carte
+
 
 pygame.init()
+buses, personnages, taille_parking = lire_carte("cartes/carte0.txt" , bus_images)
 WIDTH = 768
 HEIGHT = 644
+grid = [[0]*taille_parking for _ in range(taille_parking)]
+print(chauffeur)
+
 
 pygame.display.set_caption("BusJam")
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
@@ -31,11 +37,11 @@ for key in bus_images:
         bus_images[key],
         (cell_size, cell_size))
 
-buses = [
+"""buses = [
         Bus(2, "U", 7, True,bus_images[2], 2, 2),
         Bus(3, "R", 0, True,bus_images[3], 1, 1),
         Bus(2, "L", 1, False,bus_images[2],3, 0)
-    ]
+    ]"""
 
 
 running = True
@@ -76,10 +82,8 @@ while running:
                 b.offset_y = mouse_pos[1] - rect.y
 
     if event.type == pygame.MOUSEBUTTONUP:
-        for b in buses:
+        for b in chauffeur:
             b.dragging = False
-
-    mouse_pos = pygame.mouse.get_pos()
 
     mouse_pos = pygame.mouse.get_pos()
 
