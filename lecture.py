@@ -1,5 +1,5 @@
 from ClasseBus import Bus,replace_black_with_color
-from main import bus_images
+
 
 COLORS = {
     0:    (220, 50, 50), #red
@@ -12,6 +12,7 @@ COLORS = {
     7:   (50, 200, 200),  #cyan
     8: (149, 165, 166), #gris clair
     9:(155, 89, 182)    #violet
+
 }
 
 
@@ -32,29 +33,31 @@ def lire_carte(carte, bus_images):
     for i, b in enumerate(lignes):
         ligne = []
         for c in range(0, len(b), 4):
-          if b[c] != "X":
-            capacite = int(b[c])
-            direction = b[c + 1]
-            couleur = int(b[c + 2])
-            image = bus_images[couleur]
-            bus = Bus(x=i,
-                      y=c // 4,
-                      capacite=capacite,
-                      taille=capacite // 2,
-                      direction=direction,
-                      couleur=couleur,
-                      visite=False,
-                      charge=0,
-                      image=replace_black_with_color(image, COLORS[couleur]))
-          else:
-              bus = Bus(x=i, y=c // 4, capacite=0, taille=0, direction="X", couleur="X", visite=False, charge=0,image=replace_black_with_color(image, COLORS[couleur]) )
-              ligne.append(bus)
-          grid.append(ligne)
-    buses = []
+            if b[c] != "X":
+                capacite = int(b[c])
+                direction = b[c + 1]
+                couleur = int(b[c + 2])
+                image = bus_images[couleur]
+                bus = Bus(x=i,
+                          y=c // 4,
+                          capacite=capacite,
+                          taille=capacite // 2,
+                          direction=direction,
+                          couleur=couleur,
+                          visite=False,
+                          charge=0,
+                          image=replace_black_with_color(image, COLORS[couleur]))
+            else:
+                bus = Bus(x=i, y=c // 4, capacite=0, taille=0, direction="X", couleur=10, visite=False, charge=0,
+                          image=replace_black_with_color(image, COLORS[couleur]))
+                ligne.append(bus)
+            grid.append(ligne)
 
+    buses = []
 
     for i, ligne in enumerate(grid):
         for j, bus in enumerate(ligne):
+
             if not bus.visite:
 
                 if bus.capacite==2:

@@ -12,7 +12,8 @@ COLORS = {
     6:   (255, 120, 180), #pink
     7:   (50, 200, 200),  #cyan
     8: (149, 165, 166), #gris clair
-    9:(155, 89, 182)    #violet
+    9:(155, 89, 182),    #violet
+    10:(0, 0, 0)      #invisible pour les buses XXX
 }
 
 #colorer le fond noir par une couleur
