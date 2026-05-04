@@ -158,6 +158,47 @@ def est_jouable(grille, bus):
         return True
 
 
+def parking_libre(parking, taille_parking):
+    for i in range(0,taille_parking,2):
+        if parking[0][i]==[]:
+            return True
+    return False
 
+def empl_parking(parking, taille_parking):
+    if parking_libre(parking, taille_parking):
+        for i in range(0,taille_parking,2):
+            if parking[0][i]==[]:
+                return i
+
+
+
+def deplacer_bus(chauffeur, bus, parking, taille_parking):
+
+    if bus.capacite!=0:
+        if parking_libre(parking, taille_parking):
+            j = empl_parking(parking, taille_parking)
+            bus.direction = "U"
+            parking[0][j]=bus
+            chauffeur.remove(bus)
+    else:
+        chauffeur.remove(bus)
+
+
+def est_plein(bus):
+    return bus.capacite==bus.charge
+
+
+def monter(parking, taille_parking, personnages):
+
+    for i in range(0,taille_parking,2):
+        if parking[0][i].couleur == personnages[0] and not est_plein(parking[0][i]):
+            del personnages[0]
+            parking[0][i].charge+=1
+            return
+
+def liberer_bus(parking, taille_parking):
+    for i in range(0,taille_parking,2):
+        if est_plein(parking[0][i]):
+            del parking[0][i]
 
 print(lire_carte("C:\\Users\\Lamine\\Desktop\\carte0.txt"))
