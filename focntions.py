@@ -149,10 +149,10 @@ def est_jouable(grille, bus):
                         return False
 
         if bus.direction=="R":
-            if bus.y == len(grille[c.x])-1:
+            if bus.y == len(grille[bus.x])-1:
                 return True
             else:
-                for i in range(bus.y+1,len(grille[c.x])):
+                for i in range(bus.y+1,len(grille[bus.x])):
                     if grille[bus.x][i].direction != "X":
                         return False
         return True
