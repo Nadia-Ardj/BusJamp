@@ -48,9 +48,10 @@ def lire_carte(carte, bus_images, cell_size):
                 capacite  = int(ligne_str[c])
                 direction = ligne_str[c + 1]
                 couleur   = int(ligne_str[c + 2])
-
+                cle_image = (capacite // 2 ) - 1
                 # fallback sur image transparente si couleur inconnue
-                raw_image = bus_images.get(couleur, bus_images.get(0))
+                raw_image = bus_images.get(cle_image, bus_images.get(5))
+                
                 image = replace_black_with_color(
                     pygame.transform.scale(raw_image, (cell_size, cell_size)),
                     COLORS[couleur]
@@ -111,7 +112,7 @@ def lire_carte(carte, bus_images, cell_size):
                 k = i
                 while (k < len(grid)
                        and grid[k][j].couleur == bus.couleur
-                       and grid[k][j].direction == "U"):
+                       and grid[k][j].direction == "U" and ((k-i)<bus.taille or bus.capacite==0)):
                     grid[k][j].visite = True
                     k += 1
                 bus.taille = k - i          # taille sur bus (case de début)
@@ -122,7 +123,7 @@ def lire_carte(carte, bus_images, cell_size):
                 k = i
                 while (k < len(grid)
                        and grid[k][j].couleur == bus.couleur
-                       and grid[k][j].direction == "D"):
+                       and grid[k][j].direction == "D" and ((k-i)<bus.taille or bus.capacite==0)):
                     grid[k][j].visite = True
                     k += 1
                 bus.taille = k - i          # corrigé
@@ -133,7 +134,7 @@ def lire_carte(carte, bus_images, cell_size):
                 k = j
                 while (k < len(ligne_row)
                        and grid[i][k].couleur == bus.couleur
-                       and grid[i][k].direction == "L"):
+                       and grid[i][k].direction == "L" and ((k-j)<bus.taille or bus.capacite==0)):
                     grid[i][k].visite = True
                     k += 1
                 bus.taille = k - j          # corrigé
@@ -144,7 +145,7 @@ def lire_carte(carte, bus_images, cell_size):
                 k = j
                 while (k < len(ligne_row)
                        and grid[i][k].couleur == bus.couleur
-                       and grid[i][k].direction == "R"):
+                       and grid[i][k].direction == "R" and ((k-j)<bus.taille or bus.capacite==0)):
                     grid[i][k].visite = True
                     k += 1
                 bus.taille = k - j          #  corrigé
