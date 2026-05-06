@@ -46,10 +46,10 @@ bus_images = {
     5: pygame.image.load("Assets/imageTransp.png").convert_alpha()
 }
 
-for key in bus_images:
-    bus_images[key] = pygame.transform.scale(bus_images[key], (cell_size, cell_size))
+#for key in bus_images:
+#    bus_images[key] = pygame.transform.scale(bus_images[key], (cell_size, cell_size))  --> la redimension sera faiteavec la fctn draw_image et lire_carte
 
-buses, personnages, taille_parking, grid = lire_carte("cartes/carte0", bus_images, cell_size)
+buses, personnages, taille_parking, grid = lire_carte("cartes/carte1", bus_images, cell_size)
 parking = [None] * taille_parking
 
 

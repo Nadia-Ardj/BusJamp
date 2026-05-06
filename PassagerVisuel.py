@@ -40,8 +40,8 @@ class PassagerVisuel:
 def draw_file_attente(screen, personnages, file_x, file_y, cell_size):
 
     from lecture import COLORS
-    #on dessine les 5 premiers personnages pour ne pas encombrer l'écran
-    pour_dessin = personnages[:5]
+    #on dessine les 10 premiers personnages pour ne pas encombrer l'écran
+    pour_dessin = personnages[:10]
     for idx, couleur_id in enumerate(pour_dessin):
         #on les aligne horizontalement vers la droite
         pos_x = file_x + idx * 25
