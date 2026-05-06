@@ -1,207 +1,342 @@
-from ClasseBus import Bus,replace_black_with_color
-
+import pygame
+from ClasseBus import Bus, replace_black_with_color
 
 COLORS = {
-    0:    (220, 50, 50), #red
-    1:   (50, 100, 220), #blue
-    2:  (50, 180, 100), #green
-    3: (240, 200, 50), #yellow
-    4: (255, 140, 0),  #orange
-    5: (160, 90, 200), #purple
-    6:   (255, 120, 180), #pink
-    7:   (50, 200, 200),  #cyan
-    8: (149, 165, 166), #gris clair
-    9:(155, 89, 182)    #violet
-
+    0:  (220, 50,  50),   # red
+    1:  (50,  100, 220),  # blue
+    2:  (50,  180, 100),  # green
+    3:  (240, 200, 50),   # yellow
+    4:  (255, 140, 0),    # orange
+    5:  (160, 90,  200),  # purple
+    6:  (255, 120, 180),  # pink
+    7:  (50,  200, 200),  # cyan
+    8:  (149, 165, 166),  # gris clair
+    9:  (155, 89,  182),  # violet
+    10: (0,   0,   0),    # invisible pour les cases XXX
 }
 
 
+def lire_carte(carte, bus_images, cell_size):
+    """
+    Lit un fichier de carte BusJam et retourne les buses, personnages,
+    taille du parking et la grille logique.
 
-def lire_carte(carte, bus_images):
+    Format du fichier :
+      - ligne 0    : taille_parking (entier)
+      - lignes 1..N-1 : grille, chaque case = 3 chars  (capacité, direction, couleur_id)
+                        ou "XXX " pour une case vide
+      - ligne N    : file d'attente des personnages (un chiffre par personnage)
+    """
 
-    with open(carte, "r", encoding="utf_8") as flux:   ##Lire le fichier ligne par ligne sans \n ou les espaces non nécessaires (début/fin)
-        lignes = [ligne.strip() for ligne in flux]
+    with open(carte, "r", encoding="utf-8") as flux:
+        lignes = [ligne.strip() for ligne in flux if ligne.strip()]
 
-    taille_parking=int(lignes[0])
+    taille_parking = int(lignes[0])
+    personnages = [int(p) for p in lignes[-1]]  # convertit en int pour comparer avec couleur_id
+    lignes = lignes[1:-1]  # retire première et dernière ligne
 
-    personnages=[p for p in lignes[len(lignes)-1]]
+    # --- Étape 1 : construire la grille brute de Bus ---
+    grid = []
 
-    lignes=lignes[1:-1] #On enlève le premier et le dernier élément
+    for i, ligne_str in enumerate(lignes):
+        ligne_row = []
 
-    grid=[]
+        for c in range(0, len(ligne_str), 4):   #  step=4 explicite
+            cell = ligne_str[c:c + 3]            # compare les 3 chars
 
-    for i, b in enumerate(lignes):
-        ligne = []
-        for c in range(0, len(b), 4):
-            if b[c] != "X":
-                capacite = int(b[c])
-                direction = b[c + 1]
-                couleur = int(b[c + 2])
-                image = bus_images[couleur]
-                bus = Bus(x=i,
-                          y=c // 4,
-                          capacite=capacite,
-                          taille=capacite // 2,
-                          direction=direction,
-                          couleur=couleur,
-                          visite=False,
-                          charge=0,
-                          image=replace_black_with_color(image, COLORS[couleur]))
+            if cell != "XXX":
+                capacite  = int(ligne_str[c])
+                direction = ligne_str[c + 1]
+                couleur   = int(ligne_str[c + 2])
+
+                # fallback sur image transparente si couleur inconnue
+                raw_image = bus_images.get(couleur, bus_images.get(0))
+                image = replace_black_with_color(
+                    pygame.transform.scale(raw_image, (cell_size, cell_size)),
+                    COLORS[couleur]
+                )
+
+                bus = Bus(
+                    x=c // 4,   #  x = colonne = c//4
+                    y=i,        #  y = ligne   = i
+                    capacite=capacite,
+                    taille=capacite//2,   
+                    direction=direction,
+                    couleur=couleur,
+                    visite=False,
+                    charge=0,
+                    image=image,
+                )
             else:
-                bus = Bus(x=i, y=c // 4, capacite=0, taille=0, direction="X", couleur=10, visite=False, charge=0,
-                          image=replace_black_with_color(image, COLORS[couleur]))
-                ligne.append(bus)
-            grid.append(ligne)
+                # image vide pour les cases XXX
+                dummy_image = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+                dummy_image.fill((0, 0, 0, 0))
+
+                bus = Bus(
+                    x=c // 4,
+                    y=i,
+                    capacite=0,
+                    taille=0,
+                    direction="X",
+                    couleur=10,
+                    visite=True,   # marqué visité  : on ne le traitera pas
+                    charge=0,
+                    image=dummy_image,
+                )
+
+            ligne_row.append(bus)
+        grid.append(ligne_row)
+
+    # --- Étape 2 : reconstruire la liste des buses logiques ---
+    # Un bus multi-cases n'est représenté qu'une seule fois dans `buses`,
+    # par sa case de DÉBUT (U→case du haut, D→case du haut, L→case gauche, R→case gauche).
 
     buses = []
 
-    for i, ligne in enumerate(grid):
-        for j, bus in enumerate(ligne):
+    for i, ligne_row in enumerate(grid):
+        for j, bus in enumerate(ligne_row):
 
-            if not bus.visite:
+            if bus.visite:
+                continue
 
-                if bus.capacite==2:
-                    bus.visite=True
-                    buses.append(bus)
+            # Bus de taille 1 (capacite == 0 déjà filtré ; capacite == 2 → 1 seule case)
+            if bus.capacite == 2:
+                bus.visite = True
+                bus.taille = 1
+                buses.append(bus)
+                continue
 
-                else:
+            # --- Direction U (référence = case du haut) ---
+            if bus.direction == "U":
+                k = i
+                while (k < len(grid)
+                       and grid[k][j].couleur == bus.couleur
+                       and grid[k][j].direction == "U"):
+                    grid[k][j].visite = True
+                    k += 1
+                bus.taille = k - i          # taille sur bus (case de début)
+                buses.append(bus)           # on ajoute bus, pas grid[k-1]
 
-                    if bus.direction=="U":
+            # --- Direction D  ---
+            elif bus.direction == "D":
+                k = i
+                while (k < len(grid)
+                       and grid[k][j].couleur == bus.couleur
+                       and grid[k][j].direction == "D"):
+                    grid[k][j].visite = True
+                    k += 1
+                bus.taille = k - i          # corrigé
+                buses.append(bus)           # corrigé
 
-                        buses.append(bus)
+            # --- Direction L  ---
+            elif bus.direction == "L":
+                k = j
+                while (k < len(ligne_row)
+                       and grid[i][k].couleur == bus.couleur
+                       and grid[i][k].direction == "L"):
+                    grid[i][k].visite = True
+                    k += 1
+                bus.taille = k - j          # corrigé
+                buses.append(bus)           # corrigé
 
-                        if bus.capacite!=0:
-                            for k in range(i,i+bus.taille):
-                                grid[k][j].visite=True
-                        else:
-                            k=i
-                            while bus.couleur == grid[k][j].couleur and grid[k][j].direction == "U" and k<len(grid):
-                                grid[k][j].visite = True
-                                k+=1
-                            bus.taille=k-i
+            # --- Direction R  ---
+            elif bus.direction == "R":
+                k = j
+                while (k < len(ligne_row)
+                       and grid[i][k].couleur == bus.couleur
+                       and grid[i][k].direction == "R"):
+                    grid[i][k].visite = True
+                    k += 1
+                bus.taille = k - j          #  corrigé
+                buses.append(bus)           #  corrigé
+
+    return buses, personnages, taille_parking, grid   #  on retourne aussi grid
 
 
-                    elif bus.direction == "L":
-
-                        buses.append(bus)
-
-                        if bus.capacite != 0:
-                            for k in range(j, j + bus.taille ):
-                                grid[i][k].visite = True
-
-                        else:
-                            k = j
-                            while k < len(ligne) and grid[i][k].couleur == bus.couleur and grid[i][k].direction == "L":
-                                grid[i][k].visite = True
-                                k += 1
-                            bus.taille = k - j
-
-                    elif bus.direction=="D":
-
-                        if bus.capacite != 0:
-                            for k in range(i, i+bus.taille  ):
-                                grid[k][j].visite = True
-                        else:
-                            k = i
-                            while bus.couleur == grid[k][j].couleur and grid[k][j].direction == "D" and k < len(grid):
-                                grid[k][j].visite = True
-                                k += 1
-
-                            grid[k-1][j].taille=k-i
-                        buses.append(grid[k-1][j])
-
-                    elif bus.direction == "R":
-
-                        if bus.capacite != 0:
-                            for k in range(j, j+bus.taille):
-                                grid[i][k].visite = True
-                        else:
-                            k = j
-                            while bus.couleur == grid[i][k].couleur and grid[i][k].direction == "R" and k < len(ligne):
-                                grid[i][k].visite = True
-                                k += 1
-
-                            grid[k - 1][j].taille =k - j
-                        buses.append(grid[i][k-1])
-
-    return buses, personnages, taille_parking
+# ---------------------------------------------------------------------------
+# Fonctions logiques  du jeu
+# ---------------------------------------------------------------------------
 
 def est_jouable(grid, bus):
+    """Retourne True si le bus peut sortir de la grille sans obstacle."""
+    if bus.direction == "U":
+        for i in range(bus.y - 1, -1, -1):
+            if grid[i][bus.x].direction != "X":
+                return False
 
-        if bus.direction=="U":
-            if bus.x == 0:
-                return True
-            else:
-                for i in range(bus.x-1,-1,-1):
-                    if grid[i][bus.y].direction != "X":
-                        return False
+    elif bus.direction == "D":
+        for i in range(bus.y + bus.taille, len(grid)):
+            if grid[i][bus.x].direction != "X":
+                return False
 
-        if bus.direction=="L":
-            if bus.y == 0:
-                return True
-            else:
-                for i in range(bus.y-1,-1,-1):
-                    if grid[bus.x][i].direction != "X":
-                        return False
+    elif bus.direction == "L":
+        for j in range(bus.x - 1, -1, -1):
+            if grid[bus.y][j].direction != "X":
+                return False
 
-        if bus.direction=="D":
-            if bus.x == len(grid)-1:
-                return True
-            else:
-                for i in range(bus.x+1,len(grid)):
-                    if grid[i][bus.y].direction != "X":
-                        return False
+    elif bus.direction == "R":
+        for j in range(bus.x + bus.taille, len(grid[bus.y])):
+            if grid[bus.y][j].direction != "X":
+                return False
 
-        if bus.direction=="R":
-            if bus.y == len(grid[bus.x])-1:
-                return True
-            else:
-                for i in range(bus.y+1,len(grid[bus.x])):
-                    if grid[bus.x][i].direction != "X":
-                        return False
-        return True
+    return True
 
 
 def parking_libre(parking, taille_parking):
-    for i in range(0,taille_parking,2):
-        if parking[0][i]==[]:
+    """Retourne True s'il reste au moins une place vide (None) dans le parking."""
+    for i in range(taille_parking):
+        if parking[i] is None:
             return True
     return False
 
+#retourner la place dans le parking
 def empl_parking(parking, taille_parking):
-    if parking_libre(parking, taille_parking):
-        for i in range(0,taille_parking,2):
-            if parking[0][i]==[]:
-                return i
+    """Retourne le premier index  libre dans le parking, ou None."""
+    for i in range(taille_parking):
+        if parking[i] is None:
+            return i
+    return None
 
 
+"""
+    Remplace toutes les cases  occupées par le bus 
+    par des objets Bus 'vides' (direction 'X', couleur 10).
+    """
+def vider_emplacement_bus(grid, bus):
 
-def deplacer_bus(buses, bus, parking, taille_parking):
+    # 1. On détermine la liste des cases (x, y) occupées par ce bus
+    cases_a_vider = []
 
-    if bus.capacite!=0:
-        if parking_libre(parking, taille_parking):
-            j = empl_parking(parking, taille_parking)
-            bus.direction = "U"
-            parking[0][j]=bus
+    for i in range(bus.taille):
+        if bus.direction in ["L", "R"]:
+            cases_a_vider.append((bus.x + i, bus.y))
+        elif bus.direction in ["U", "D"]:
+            cases_a_vider.append((bus.x, bus.y + i))
+
+    # 2. On remplace chacune de ces cases par un bus "vide"
+    for cx, cy in cases_a_vider:
+        # On s'assure de ne pas sortir des limites de la grille par sécurité
+        if 0 <= cy < len(grid) and 0 <= cx < len(grid[0]):
+
+            # On crée une surface transparente pour la case vide
+            dummy_image = pygame.Surface((30, 30), pygame.SRCALPHA)
+            dummy_image.fill((0, 0, 0, 0))
+
+            # On écrase l'ancien bus par un bloc de vide "X"
+            grid[cy][cx] = Bus(
+                x=cx,
+                y=cy,
+                capacite=0,
+                taille=0,
+                direction="X",
+                couleur=10,
+                visite=True,
+                charge=0,
+                image=dummy_image
+            )
+
+"""Déplacer le bus vers le parking et nettoie sa place sur la grille."""
+
+def deplacer_bus(buses, bus, parking, taille_parking, grid):
+    """Déplace le bus vers le parking si c'est un vrai bus à charger."""
+    # Si le bus est un bus "vide/décoratif" (capacité 0 ou "XXX")
+    if bus.capacite == 0 or bus.direction == "X":
+        vider_emplacement_bus(grid, bus)
+        if bus in buses:
             buses.remove(bus)
-    else:
+        return "detruit"
+
+    # Si c'est un bus qui doit recevoir des passagers
+    if parking_libre(parking, taille_parking):
+        j = empl_parking(parking, taille_parking)
+
+        # On vide sa place dans la grille de jeu
+        vider_emplacement_bus(grid, bus)
+
+        # On l'envoie au parking
+        bus.direction = "U"
+        parking[j] = bus
         buses.remove(bus)
+        return "gare"  # Succès (le bus a été bien placé dans le parking )
+    else:
+        print(" ÉCHEC : Le parking est complètement plein !")
+        return "plein"
+
 
 
 def est_plein(bus):
-    return bus.capacite==bus.charge
+    return bus.capacite == bus.charge
+
+#---tuple RGB en ID numérique :
+def obtenir_id_depuis_rgb(rgb_tuple):
+    from lecture import COLORS
+    for couleur_id, val_rgb in COLORS.items():
+        if val_rgb == rgb_tuple:
+            return couleur_id
+    return None # Non trouvé
+
+#-------
+"""
+    Vérifie si le premier personnage de la file peut monter dans un bus du parking.
+    Si oui, on crée un PassagerVisuel qui va marcher vers le bus.
+    """
+def monter(parking, taille_parking, personnages, parking_x, parking_y, cell_size, liste_visuels, file_x, file_y):
+
+    if not personnages:
+        return
+
+    for i in range(taille_parking):
+        p = parking[i]
+        if p is not None:
+            #print(f" Comparaison : Perso ID={personnages[0]} (type: {type(personnages[0])}) "
+                 # f"avec Bus Couleur={p.couleur} (type: {type(p.couleur)})")
+            if not est_plein(p):
+                # verifier si e premier personnage de la file correspond à la couleur du bus
+                # On convertit la couleur RGB du bus en ID numérique avant de comparer
+             id_couleur_bus = obtenir_id_depuis_rgb(p.couleur)
+             if id_couleur_bus == personnages[0]:
+                couleur_id = personnages[0]
+                print(f" Couleur {p.couleur} correspondante.")
+
+                # récupérer la couleur RGB correspondante
+                from lecture import COLORS
+                couleur_rgb = COLORS.get(couleur_id, (255, 255, 255))
+
+                # calcul de la position cible (le centre de la case de parking correspondante)
+                place_x = parking_x + i * (cell_size + 10) + (cell_size // 2)
+                place_y = parking_y + (cell_size // 2)
+
+                # création du passager animé
+                from PassagerVisuel import PassagerVisuel
+                nouveau_passager = PassagerVisuel(
+                    x_depart=file_x,
+                    y_depart=file_y,
+                    x_cible=place_x,
+                    y_cible=place_y,
+                    couleur_id=couleur_id,
+                    couleur_rgb=couleur_rgb,
+                    vitesse=4
+                )
+
+                # ajouter ce passager à la liste des animations en cours
+                liste_visuels.append((nouveau_passager, p))  # On lie le passager visuel au bus cible 'p'
+
+                # On retire le personnage de la file d'attente logique immédiatement
+                del personnages[0]
+                print(f" Passager de couleur {p.couleur} monte. Remplissage du bus : {p.charge}/{p.capacite}")
+                return   #on traite un passeger à la fois
+            else:
+                print(" Pas de correspondance de couleur.")
 
 
-def monter(parking, taille_parking, personnages):
-
-    for i in range(0,taille_parking,2):
-        if parking[0][i].couleur == personnages[0] and not est_plein(parking[0][i]):
-            del personnages[0]
-            parking[0][i].charge+=1
-            return
-
+#------
 def liberer_bus(parking, taille_parking):
-    for i in range(0,taille_parking,2):
-        if est_plein(parking[0][i]):
-            del parking[0][i]
+    """Si un bus est plein, il s'en va du parking et laisse sa place vide """
+    for i in range(taille_parking):
+        if parking[i] is not None and est_plein(parking[i]):
+            print(f" Le bus {parking[i].couleur} est plein et quitte le parking !")
+            parking[i] = None # La place redevient libre
+
+
+
 

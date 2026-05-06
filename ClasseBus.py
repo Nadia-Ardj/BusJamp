@@ -1,4 +1,3 @@
-
 import pygame
 from grille import grid, cell_size, offset_x, offset_y, draw_grid
 
@@ -32,85 +31,37 @@ def replace_black_with_color(image, new_color):
 
 
 class Bus:
-        def __init__(self, taille: int, direction: str, couleur: int, image , x: int, y: int , visite: bool, charge: int, capacite: int):
-            self.taille = taille
-            self.direction = direction  # U, D, L, R
-            self.couleur =  COLORS[couleur]
-            self.x = x
-            self.y = y
-            # image coloré une seul fois :
-            self.image = replace_black_with_color(image, self.couleur)
-            self.dragging = False
-            self.offset_x = 0
-            self.offset_y = 0
-            self.visite = visite
-            self.charge = charge
-            self.capacite = capacite
+    def __init__(self, taille: int, direction: str, couleur: int, image, x: int, y: int, visite: bool, charge: int,
+                 capacite: int):
+        self.taille = taille
+        self.direction = direction  # U, D, L, R
+        self.couleur_id = couleur
+        self.couleur = COLORS[couleur]
+        self.x = x
+        self.y = y
+        # image coloré une seul fois :
+        self.image = replace_black_with_color(image, self.couleur)
 
+        self.offset_x = 0
+        self.offset_y = 0
 
-        def __repr__(self):
-            return f"Bus(taille={self.taille}, direction='{self.direction}', couleur={self.couleur}, chauffeur={self.chauffeur}, x={self.x}, y={self.y},visite={self.visite}, charge={self.charge})"
+        self.visite = visite
+        self.charge = charge
+        self.capacite = capacite
+        self.dragging = False
 
+        self.target_x = self.x
+        self.target_y = self.y
 
+        self.speed = 3
+        self.moving = False
 
-def draw_bus(screen,  bus, cell_size, offset_x, offset_y):
+    def __repr__(self):
+        return f"Bus(taille={self.taille}, direction='{self.direction}', couleur={self.couleur},  x={self.x}, y={self.y},visite={self.visite}, charge={self.charge})"
 
-            for i in range(bus.taille):
+#---desiner les bus ----#
 
-                if bus.direction in ["L", "R"]:
-                    x = bus.x + i
-                    y = bus.y
-                else:
-                    x = bus.x
-                    y = bus.y + i
-
-                rect = pygame.Rect(
-                    offset_x + x * cell_size,
-                    offset_y + y * cell_size,
-                    cell_size,
-                    cell_size
-                )
-                pygame.draw.rect(screen, bus.couleur, rect)
-
-def draw_image(screen, bus, cell_size, offset_x, offset_y):
-
-    image = bus.image
-
-    # rotation selon direction
-    if bus.direction == "U":
-        image = pygame.transform.rotate(image, 90)
-    elif bus.direction == "D":
-        image = pygame.transform.rotate(image, -90)
-    elif bus.direction == "L":
-        image = pygame.transform.rotate(image, 180)
-
-    # resize après rotation
-    if bus.direction in ["L", "R"]:
-        size = (bus.taille * cell_size, cell_size)
-    else:
-        size = (cell_size, bus.taille * cell_size)
-
-    image = pygame.transform.scale(image, size)
-
-    screen.blit(image, (offset_x + bus.x * cell_size,
-                        offset_y + bus.y * cell_size))
-
-def deplacement_bus(screen, bus, cell_size, offset_x,offset_y):
-    for i in  range(bus.taille):
-        if bus.direction == "U":
-           pygame.MOUSEWHEEL()
-
-    old_x, old_y = b.x, b.y
-
-    if b.direction in ["L", "R"]:
-        b.x = new_x
-    else:
-        b.y = new_y
-
-    if not in_bounds(b, grid) or collides(b, buses):
-        b.x, b.y = old_x, old_y
-
-
+#calculer précisément la zone rectangulaire du bus
 def get_rect(bus, cell_size, offset_x, offset_y):
 
     if bus.direction in ["L", "R"]:
@@ -126,49 +77,29 @@ def get_rect(bus, cell_size, offset_x, offset_y):
         width,
         height
     )
-#fonction qui récupére les cases d'un bus :
-def get_cells(bus):
-    cells = []
 
-    for i in range(bus.taille):
-        if bus.direction in ["L", "R"]:
-            x = bus.x + i
-            y = bus.y
-        else:
-            x = bus.x
-            y = bus.y + i
+#dessiner le bus avec son image
+def draw_image(screen, bus, cell_size, offset_x, offset_y):
+    # 1. Obtenir le rectangle de destination exact grâce à get_rect
+    rect_destination = get_rect(bus, cell_size, offset_x, offset_y)
 
-        cells.append((x, y))
+    image = bus.image
 
-    return cells
-
-#la collision avec les autres bus:
-def collides(bus, buses):
-    my_cells = get_cells(bus)
-
-    for other in buses:
-        if other == bus:
-            continue
-
-        other_cells = get_cells(other)
-
-        for cell in my_cells:
-            if cell in other_cells:
-                return True
-
-    return False
+    # rotation selon direction
+    if bus.direction == "U":
+        image = pygame.transform.rotate(image, 90)
+    elif bus.direction == "D":
+        image = pygame.transform.rotate(image, -90)
+    elif bus.direction == "L":
+        image = pygame.transform.rotate(image, 180)
+    elif bus.direction == "R":
+        image = pygame.transform.rotate(image, 0)  #elle est à droite par défaut
 
 
-#bloquer les bords de la grille :
-def in_bounds(bus, grid):
-    for (x, y) in get_cells(bus):
-        if x < 0 or y < 0:
-            return False
-        if y >= len(grid) or x >= len(grid[0]):
-            return False
-    return True
+    # 2. On redimensionne l'image du bus pour qu'elle fasse exactement la taille du rectangle
+    image = pygame.transform.scale(image, (rect_destination.width, rect_destination.height))
 
-
-
+    # 3. On dessine cette image aux bonnes coordonnées
+    screen.blit(image, rect_destination)
 
 
