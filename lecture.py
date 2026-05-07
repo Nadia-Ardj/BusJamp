@@ -49,15 +49,8 @@ def lire_carte(carte, bus_images, cell_size):
                 direction = ligne_str[c + 1]
                 couleur   = int(ligne_str[c + 2])
 
-                # capacité 2 -> clé 0 (bus2.png)
-                # capacité 4 -> clé 1 (bus4.png)
-                # capacité 6 -> clé 2 (bus6.png)
-                # capacité 8 -> clé 3 (bus8.png)
-                # capacité 10 -> clé 4 (bus10.png)
-                cle_image = (capacite // 2) - 1
-
-                # Récupération de l'image de la bonne taille (ou fallback sur l'image transparente si invalide)
-                raw_image = bus_images.get(cle_image, bus_images.get(5))
+                # fallback sur image transparente si couleur inconnue
+                raw_image = bus_images.get(couleur, bus_images.get(0))
                 image = replace_black_with_color(
                     pygame.transform.scale(raw_image, (cell_size, cell_size)),
                     COLORS[couleur]
@@ -96,7 +89,7 @@ def lire_carte(carte, bus_images, cell_size):
 
     # --- Étape 2 : reconstruire la liste des buses logiques ---
     # Un bus multi-cases n'est représenté qu'une seule fois dans `buses`,
-    # par sa case de DÉBUT (U→case du haut, D→case du bas, L→case gauche, R→case gauche).
+    # par sa case de DÉBUT (U→case du haut, D→case du haut, L→case gauche, R→case gauche).
 
     buses = []
 
@@ -266,7 +259,7 @@ def deplacer_bus(buses, bus, parking, taille_parking, grid):
         buses.remove(bus)
         return "gare"  # Succès (le bus a été bien placé dans le parking )
     else:
-        print("ÉCHEC : Le parking est complètement plein !")
+        print(" ÉCHEC : Le parking est complètement plein !")
         return "plein"
 
 
