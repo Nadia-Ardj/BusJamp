@@ -3,6 +3,7 @@ from grille import grid, cell_size, offset_x, offset_y, draw_grid, draw_parking
 from ClasseBus import Bus , draw_image,get_rect
 from lecture import lire_carte, est_jouable, deplacer_bus, monter, liberer_bus, vider_emplacement_bus
 from PassagerVisuel import PassagerVisuel, draw_file_attente
+from ia import BusJamSolver
 
 pygame.init()
 pygame.mixer.init()    #activer les songs
@@ -96,10 +97,11 @@ bus_images = {
 #for key in bus_images:
 #    bus_images[key] = pygame.transform.scale(bus_images[key], (cell_size, cell_size))  --> la redimension sera faiteavec la fctn draw_image et lire_carte
 
-buses, personnages, taille_parking, grid = lire_carte("cartes/carte2", bus_images, cell_size)
+buses, personnages, taille_parking, grid = lire_carte("cartes/carte3", bus_images, cell_size)
+
 parking = [None] * taille_parking
 
-
+solver = BusJamSolver(buses, personnages, parking, grid)
 print(buses)
 print(personnages)
 print(taille_parking)
@@ -120,6 +122,10 @@ show_grid = True
 game_over = False
 victoire = False
 son_fin_joue = False   #pour eviter que le song tourne en boucle
+# --- Variables pour l'auto-play IA ---
+ia_auto = False          # True = l'IA joue toute seule
+ia_delai = 60            # Nombre de frames entre chaque coup (60 ≈ 1 seconde)
+ia_compteur = 0          # Compteur de frames depuis le dernier coup
 frames_bloquees = 0
 
 while running:
@@ -161,7 +167,22 @@ while running:
 
     # 5. Libérer les bus pleins
     liberer_bus(parking, taille_parking)
-
+    # --- AUTO-PLAY IA ---
+    if ia_auto and not victoire and not game_over:
+        # On attend que tous les passagers en marche soient arrivés avant de jouer
+        if len(passagers_en_marche) == 0:
+            ia_compteur += 1
+            if ia_compteur >= ia_delai:
+                ia_compteur = 0
+                bus_a_cliquer = solver.trouver_prochain_coup(buses, grid, parking, personnages)
+                if bus_a_cliquer:
+                    if est_jouable(grid, bus_a_cliquer):
+                        if son_deplacement: son_deplacement.play()
+                        deplacer_bus(buses, bus_a_cliquer, parking, taille_parking, grid)
+                else:
+                    # Plus aucun coup possible → on arrête l'auto-play
+                    ia_auto = False
+                    print("IA : aucun coup possible, auto-play arrêté.")
     for event in pygame.event.get():
 
         if event.type == pygame.QUIT:
@@ -170,6 +191,12 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_g:
                 show_grid = not show_grid
+
+            # --- AJOUT DE L'IA ---
+            if event.key == pygame.K_i:  # 'I' = basculer le mode auto-play
+                ia_auto = not ia_auto
+                ia_compteur = 0
+                print("IA Auto :", "ON" if ia_auto else "OFF")
 
 # -------------
 #Gestion du clic:
