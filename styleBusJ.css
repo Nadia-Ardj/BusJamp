@@ -1,0 +1,102 @@
+body {
+   background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('busjback.png');
+    background-size: cover;       /* L'image prend tout l'espace */
+    background-position: center;  /* Centre l'image */
+    background-attachment: fixed; /* L'image reste fixe pendant le scroll */
+    background-repeat: no-repeat;
+    
+    font-family: cursive;
+    font-style: italic;
+    color: #fff; 
+    margin: 0;
+    line-height: 1.6;
+}
+nav {
+    background: rgba(44, 62, 80, 0.6); /* Fond sombre légèrement transparent */
+    padding: 15px 50px;              /* Espacement interne */
+    position: fixed;                 /* Reste en haut au scroll */
+    top: 0;
+    left: 0;
+    width: 100%;                     /* Prend toute la largeur */
+    z-index: 1000;                   /* Passe au-dessus du background */
+    display: flex;                  
+    justify-content: flex-end;       /* le contenu vers la droite */
+    align-items: center;             
+    box-sizing: border-box;          /* Évite que le padding n'élargisse la barre */
+}
+
+nav ul {
+    list-style: none;                /* Enlève les puces (les pt't point noir)*/
+    margin: 0;
+    padding: 0;
+    display: flex;                   /* Aligne les <li> horizontalement */
+}
+
+nav ul li {
+    margin-left: 30px;               /* Espace entre les liens */
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #3498db;                  /* Change de couleur au survol */
+}
+
+
+body {
+    padding-top: 70px; 
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+}
+h1{
+    justify-content: center;
+    font-family:cursive;
+    align-items: center;
+    display: flex;
+    text-shadow: 3px 3px 6px rgba(238, 19, 19, 0.5);
+}
+p{
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    margin-top:40px;
+}
+h2{
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    color: chartreuse;
+    margin-top: 40px;
+}
+
+footer {
+    position: fixed;         /* Il reste en bas même si on scrolle */
+    bottom: 0;               /* Aligné tout en bas */
+    left: 0;
+    width: 100%;           
+    
+    background: rgba(44, 62, 80, 0.6); 
+    color: white;
+    padding: 0px 0;         
+    
+    display: flex;           
+    justify-content: center; 
+    align-items: center;    
+    
+    backdrop-filter: blur(5px); 
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    
+    font-family: 'Dancing Script', cursive; 
+    font-size: 12px;
+}
+
+/* On ajoute une marge en bas du main pour que le footer ne cache pas le texte du projet */
+main {
+    margin-bottom: 80px; 
+}

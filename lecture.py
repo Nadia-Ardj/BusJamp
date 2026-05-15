@@ -353,7 +353,3 @@ def liberer_bus(parking, taille_parking):
         if parking[i] is not None and est_plein(parking[i]):
             print(f" Le bus {parking[i].couleur} est plein et quitte le parking !")
             parking[i] = None # La place redevient libre
-
-
-
-

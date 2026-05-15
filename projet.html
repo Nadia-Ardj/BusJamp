@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="fr-FR" >
+
+<head>
+    <link rel="stylesheet" type="text/css" href="styleProjet.css" />
+    <meta charset="utf-8" >
+    <meta name="author" content="Ardjoune Nadia">
+    <meta name="description" content="Site-web d'un jeu">
+    <title>Déroulement du jeu</title>
+</head>
+<body>
+
+    <nav> 
+        <ul>
+            <li><a href="indexBusJ.html">Accueil</a></li>
+            <li><a href="projet.html">À propos du jeu</a></li>
+            <li><a href="equipe.html">Binome</a></li>
+        </ul>
+    </nav>
+
+<main class="répartition-semaine">
+    <header>
+        <h1>BusJam : </h1>
+    </header>
+    <section class="intro">
+         <p>Un puzzle de logique où tu dois libérer des bus coincés dans une grille, les garer dans un parking, puis charger les bons passagers selon leur couleur.</p>
+    </section>
+
+    <section class="étapes">
+        <h1>Comment ça marche ? - Les 4 étapes :</h1>
+        <ol>
+            <li><b>Tu cliques sur un bus </b>— s'il a le chemin libre dans sa direction (U, D, L ou R), il quitte la grille et rejoint le parking.</li>
+            <li><strong>Le bus attend dans le parking  </strong>— il reste garé jusqu'à ce que des passagers de sa couleur montent dedans.</li>
+            <li><strong>Les passagers montent un par un </strong>— le premier de la file marche automatiquement vers le bus de sa couleur dans le parking.</li>
+            <li><strong>Bus plein = bus qui repart </strong>— quand un bus atteint sa capacité max, il libère sa place dans le parking.</li>
+        <p><strong> L'objectif : vider la grille ET la file.</strong></p>
+    </ol> 
+    </section>
+
+    <section class="obstacles">
+        <h1>Les obstacles et situations de blocage :</h1>
+        <ul>
+            <li><b>Bus bloqué:</b> un autre bus se trouve dans la trajectoire.</li>
+            <li><b>Parcking plein.</b></li>
+            <li><b>Mauvaise couleur </b>le premier passeger de la file d'attente n'as pas de de bus de <b>sa couleur</b> dans le parking.</li>
+        </ul>
+    </section>
+
+    <section class="victoire">
+        <h1>Condition de VICTOIRE :</h1>
+        <ul>
+            <li>Vider le parcking de tous les bus en les coordonnant avec les bons passagers qui attendent sur le quai.</li>
+        </ul>
+    </section>
+    <section class="echec">
+        <h1>Partie PERDUE :</h1>
+        <ul>
+            <li>Si le parcking est plein + prochain passager est sans bus disponible.</li>
+        </ul>
+    </section>
+
+    <header>
+        <h1></h1>
+        <h1></h1>
+        <h1>Déroulement du Projet : BusJam</h1>
+        <p>De la lecture du fichier à l'IA finale</p>
+    </header>
+
+    <section class="semaine">
+        <h2>Semaine 1 : Fondations & Structure</h2>
+        <p>Globalement les premiers jours de la semaine on été consacrés à une phase d'analyse approfondie du jeu "BusJam" afin d'en saisir toutes les mécaniques et les contraintes logistiques.</p>
+        <p>Voici donc les tâches de chacun de nous durant la semaine: </p>
+        <div class="taches-Nadia">
+            <h3><u>Nadia ARDJOUNE</u></h3>
+            <p>Une fois le concept du jeu est maitrisé , j'ai attaquée :</p>
+            <ul>
+                <li>1- La creation de  l'interface graphique : installation du background </li>
+                <li>2- la creation de la grille ( le fichier grille.py )</li>
+                <li>3- L'initialisation de la ClasseBus : modélisation des bus avec leurs capacité, leur taille et leur direction (U,D,R,L)</li>
+                <li>4- Rajouter la gestion de clic sur les bus </li>
+            </ul>
+
+        </div>
+        <div class="taches-Lamine">
+            <h3><u>Lamine Idoughi</u></h3>
+             <ul >
+            <li><strong>Analyse des cartes :</strong> Création de la fonction "lire_carte" pour lire les fichiers texte et les transformer en grille de jeu.</li>    
+        </ul>
+        </div>
+    </section>
+
+    <section class="semaine">
+        <h2>Semaine 2 : Moteur de Jeu & Graphismes</h2>
+        <p>Le défi majeur de cette semaine a été d'assurer la parfaite transmission des données entre le moteur logique et l'interface graphique</p>
+        <div class="taches-Nadia">
+        <h3><u>Nadia ARDJOUNE</u></h3>
+        <ul>
+            <li>1- finir la classeBus avec la fonction <b>draw_image</b> pour dessiner parfaitement les bus sur la grille</li>
+            <li>2- Suite à des erreurs d'interprétation des fichiers sources(cartes) dans la fonction "lire_carte", une refonte du module de lecture a été nécessaire pour garantir l'affichage exact de la grille des bus.</li>  
+        </ul>
+        </div>
+         <div class="taches-Lamine">
+            <h3><u>Lamine Idoughi</u></h3>
+             <ul >
+            <li><strong>Logique de mouvement :</strong> Programmation des déplacements des bus et détection des collisions entre eux.</li>
+    </section>
+
+    <section class="semaine">
+        <h2>Semaine 3 : L'Intelligence Artificielle (Le Cerveau)</h2>
+        <p>Globalement les premiers jours de la semaine on été consacrés à une phase d'analyse approfondie du jeu "BusJam" afin d'en saisir toutes les mécaniques et les contraintes logistiques.</p>
+        
+        <div class="taches-Nadia">
+            <h3><u>Nadia ARDJOUNE</u></h3>
+            <ul>
+                <li>1- Enchainé avec le fichier PassegerVisual pour la création des personnages et la fil d'attente </li>
+                <li>2- Modifier la boucle principale pour l'affichage des personnages</li>
+                <li>3- Création du la grille du parking pour remplir les bus des passagers </li>
+                <li>4- Ajout des fonction sur le fichier lecture pour le deplacement des bus et pour detecter si le parking est plein où non et les gérer </li>
+                <li>5- Rajouter les sons pour le jeu et les  fonctions pour la détection de victoire et l'échec </li>
+            </ul>
+
+        </div>
+        <ul class="taches-Lamine">
+            <h3><u>Lamine Idoughi</u></h3>
+
+            <li><strong>Algorithme de déblocage :</strong> Développement de la logique capable d'identifier quel bus bloque la sortie.</li>
+            <li><strong>Gestion des obstacles :</strong> Création d'une fonction récursive pour déplacer les bus qui bloquent le bus cible.</li>
+        </ul>
+    </section>
+
+    <section class="semaine">
+        <h2>Semaine 4 : Optimisation & Finalisation</h2>
+        <ul class="liste-taches">
+            <li><strong>Interface Web :</strong> Création de ce site de présentation pour documenter notre travail.</li>
+        </ul>
+    </section>
+</main>
+
+

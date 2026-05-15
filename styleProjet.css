@@ -1,0 +1,140 @@
+body {
+   background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('busjback.png');
+    background-size: cover;       /* L'image prend tout l'espace */
+    background-position: center;  /* Centre l'image */
+    background-attachment: fixed; /* L'image reste fixe pendant le scroll */
+    background-repeat: no-repeat;
+    
+    font-family: cursive;
+    font-style: italic;
+    color: #fff; 
+    margin: 0;
+    line-height: 1.6;
+}
+nav {
+    background: rgba(44, 62, 80, 0.6); /* Fond sombre légèrement transparent */
+    padding: 15px 50px;              /* Espacement interne */
+    position: fixed;                 /* Reste en haut au scroll */
+    top: 0;
+    left: 0;
+    width: 100%;                     /* Prend toute la largeur */
+    z-index: 1000;                   /* Passe au-dessus du background */
+    display: flex;                  
+    justify-content: flex-end;       /* le contenu vers la droite */
+    align-items: center;             
+    box-sizing: border-box;          /* Évite que le padding n'élargisse la barre */
+}
+
+nav ul {
+    list-style: none;                /* Enlève les puces (les pt't point noir)*/
+    margin: 0;
+    padding: 0;
+    display: flex;                   /* Aligne les <li> horizontalement */
+}
+
+nav ul li {
+    margin-left: 30px;               /* Espace entre les liens */
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 22px;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #3498db;                  /* Change de couleur au survol */
+}
+h1{
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+    text-shadow: 3px 3px 6px rgba(238, 9, 9, 0.5);
+}
+p{
+    color: rgb(31, 210, 7);
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+
+}
+.répartition-semaine {
+    max-width: 900px;
+    margin: 100px auto; /* Espace pour le menu du haut */
+    padding: 20px;
+    font-size: 19px;
+}
+
+.semaine {
+    background: rgba(255, 255, 255, 0.1); 
+    border-left: 4px solid #f1c40f;      
+    margin-bottom: 40px;
+    padding: 20px 40px;
+    border-radius: 0 20px 20px 0;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+}
+
+.semaine:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.02); /* Petit effet de zoom au survol */
+}
+
+.semaine h2 {
+    color: #f1c40f;
+    margin-top: 0;
+    font-size: 28px;
+}
+.intro p{
+    color: rgb(251, 254, 254);
+    text-indent: 30px;
+}
+.étapes{
+    list-style: none;
+    counter-reset: ma-list;  /* initialiser le cmpt */
+    max-width: 900px;
+
+}
+.étapes li{
+    counter-increment: ma-liste; /* On augmente le compteur à chaque ligne */
+    margin-bottom: 25px;
+    position: relative;
+    padding-left: 40px; /* Espace pour laisser la place au cercle */
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    font-size: 22px;
+}
+.étapes li::before{
+    content: counter(ma-liste); /* On affiche le chiffre du compteur */
+    position: absolute;
+    left: 0;
+    /* Style du cercle */
+    width: 25px;
+    height: 25px;
+    background-color: #f1c40f; 
+    color: #2c3e50;            /* Couleur du chiffre */
+    border-radius: 50%;       
+
+    /* Alignement du chiffre au centre du cercle */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    font-weight: bold;
+    font-size: 22px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+}
+.semaine p{
+     color: rgb(243, 170, 179);
+    text-indent: 30px;
+    font-size: 22px;
+}
+h3{
+    color:#f1c40f;
+}
+.taches-Nadia li{
+    list-style: none;
+}

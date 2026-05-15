@@ -1,4 +1,5 @@
 import pygame
+import random
 from grille import grid, cell_size, offset_x, offset_y, draw_grid
 
 COLORS = {
@@ -55,6 +56,7 @@ class Bus:
 
         self.speed = 3
         self.moving = False
+        self.id = random.randint(1, 1000000)
 
     def __repr__(self):
         return f"Bus(taille={self.taille}, direction='{self.direction}', couleur={self.couleur},  x={self.x}, y={self.y},visite={self.visite}, charge={self.charge})"
