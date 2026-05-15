@@ -1,5 +1,6 @@
 from collections import deque
 import time
+import re
 
 # ──────────────────────────────────────────────────────────────
 # 1.  Lecture de la carte  (sans pygame)
@@ -51,24 +52,34 @@ def lire_carte_logique(chemin):
                 visite[i][j] = True
                 continue
 
+            taille_max = c['cap'] // 2  # taille initiale encodée dans la capacité de la case
+
             if c['dir'] in ('L','R'):
                 k = j
-                while k < cols and grille[i][k]['couleur'] == c['couleur'] and grille[i][k]['dir'] == c['dir']:
+                while (k < cols
+                       and grille[i][k]['couleur'] == c['couleur']
+                       and grille[i][k]['dir'] == c['dir']
+                       and (k - j) < taille_max):
                     visite[i][k] = True
                     k += 1
                 taille = k - j
+                cap = max(grille[i][jj]['cap'] for jj in range(j, k))
             else:
                 k = i
-                while k < rows and grille[k][j]['couleur'] == c['couleur'] and grille[k][j]['dir'] == c['dir']:
+                while (k < rows
+                       and grille[k][j]['couleur'] == c['couleur']
+                       and grille[k][j]['dir'] == c['dir']
+                       and (k - i) < taille_max):
                     visite[k][j] = True
                     k += 1
                 taille = k - i
+                cap = max(grille[ii][j]['cap'] for ii in range(i, k))
 
             buses.append({
                 'x': j, 'y': i,
                 'dir': c['dir'],
                 'couleur': c['couleur'],
-                'cap': c['cap'],
+                'cap': cap,
                 'taille': taille,
                 'charge': 0,
             })
@@ -291,7 +302,7 @@ def solveur_bfs(etat_initial, max_etats=500_000):
 
 
 # ──────────────────────────────────────────────────────────────
-# 4.  Point d'entrée
+# 4.  Point d'entrée (standalone)
 # ──────────────────────────────────────────────────────────────
 
 def main(chemin_carte="carte0"):
@@ -337,3 +348,149 @@ if __name__ == "__main__":
     import sys
     carte = sys.argv[1] if len(sys.argv) > 1 else "carte0"
     main(carte)
+
+
+# ──────────────────────────────────────────────────────────────
+# 5.  SolveurManager  – interface pygame pour main.py
+# ──────────────────────────────────────────────────────────────
+
+class SolveurManager:
+    """
+    Encapsule toute la logique hint / auto-solve pour main.py.
+    main.py n'a besoin que de :
+        - solveur.get_hint()
+        - solveur.toggle_auto()
+        - solveur.tick(passagers_en_marche, grid, buses, est_jouable_fn)
+        - solveur.on_clic_bus(b)
+        - solveur.bus_du_prochain_coup(buses)
+        - solveur.solution_coups  (lecture seule)
+        - solveur.hint_idx        (lecture seule)
+        - solveur.auto_solve      (lecture seule)
+    """
+
+    def __init__(self, buses, personnages, parking, taille_parking, grid,
+                 son_deplacement=None, son_collision=None):
+        self._buses          = buses
+        self._personnages    = personnages
+        self._parking        = parking
+        self._taille_parking = taille_parking
+        self._grid           = grid
+        self._son_dep        = son_deplacement
+        self._son_col        = son_collision
+
+        self.solution_coups = []
+        self.hint_idx       = 0
+        self.auto_solve     = False
+        self._auto_timer    = 0
+
+    # ------------------------------------------------------------------
+    def _construire_etat(self):
+        """Convertit l'état pygame courant en dict lisible par le solveur."""
+        return {
+            'grille': [
+                [{'dir': c.direction, 'couleur': c.couleur_id, 'cap': c.capacite}
+                 for c in row]
+                for row in self._grid
+            ],
+            'buses': [
+                {'x': b.x, 'y': b.y, 'dir': b.direction, 'couleur': b.couleur_id,
+                 'cap': b.capacite, 'taille': b.taille, 'charge': b.charge}
+                for b in self._buses
+            ],
+            'parking': [
+                None if p is None else
+                {'x': 0, 'y': 0, 'dir': p.direction, 'couleur': p.couleur_id,
+                 'cap': p.capacite, 'taille': p.taille, 'charge': p.charge}
+                for p in self._parking
+            ],
+            'personnages': list(self._personnages),
+        }
+
+    # ------------------------------------------------------------------
+    def get_hint(self):
+        """Lance le solveur depuis l'état courant et stocke la solution."""
+        print("Calcul de la solution en cours...")
+        t0 = time.perf_counter()
+        self.solution_coups = solveur_bfs(self._construire_etat()) or []
+        duree = time.perf_counter() - t0
+        self.hint_idx = 0
+        if self.solution_coups:
+            print(f"Solution trouvée en {len(self.solution_coups)} coups !  (temps : {duree:.3f}s)")
+        else:
+            print(f"Aucune solution trouvée.  (temps : {duree:.3f}s)")
+
+    # ------------------------------------------------------------------
+    def toggle_auto(self):
+        """Active / désactive le mode auto-solve (lance get_hint si besoin)."""
+        if not self.solution_coups:
+            self.get_hint()
+        self.auto_solve  = not self.auto_solve
+        self._auto_timer = 0
+        print(f"Auto-solve : {'ON' if self.auto_solve else 'OFF'}")
+
+    # ------------------------------------------------------------------
+    def bus_du_prochain_coup(self, buses):
+        """Retourne l'objet Bus pygame correspondant au prochain coup."""
+        if not self.solution_coups or self.hint_idx >= len(self.solution_coups):
+            return None
+        coup = self.solution_coups[self.hint_idx]
+        m = re.search(r'pos=\((\d+),(\d+)\)', coup)
+        if not m:
+            return None
+        tx, ty = int(m.group(1)), int(m.group(2))
+        for b in buses:
+            if b.x == tx and b.y == ty:
+                return b
+        return None
+
+    # ------------------------------------------------------------------
+    def _jouer_coup(self, b):
+        """Exécute un coup (déplace le bus b)."""
+        from lecture import vider_emplacement_bus, deplacer_bus
+        if b.capacite == 10 and b.couleur == 0:
+            vider_emplacement_bus(self._grid, b)
+            self._buses.remove(b)
+            if self._son_dep:
+                self._son_dep.play()
+        else:
+            statut = deplacer_bus(self._buses, b, self._parking, self._taille_parking, self._grid)
+            if statut in ("gare", "detruit") and self._son_dep:
+                self._son_dep.play()
+            elif statut == "plein" and self._son_col:
+                self._son_col.play()
+
+    # ------------------------------------------------------------------
+    def tick(self, passagers_en_marche, grid, buses, est_jouable_fn):
+        """
+        À appeler une fois par frame dans la boucle principale.
+        Gère le décompte et le déclenchement du coup automatique.
+        """
+        # Mettre à jour les références (les listes sont mutables, pas besoin de réassigner)
+        self._grid  = grid
+        self._buses = buses
+
+        if not (self.auto_solve and self.solution_coups
+                and self.hint_idx < len(self.solution_coups)):
+            return
+
+        self._auto_timer += 1
+        if self._auto_timer >= 300 and len(passagers_en_marche) == 0:
+            self._auto_timer = 0
+            b = self.bus_du_prochain_coup(buses)
+            if b and est_jouable_fn(grid, b):
+                self.hint_idx += 1
+                self._jouer_coup(b)
+            else:
+                self.auto_solve = False   # désynchronisation
+
+    # ------------------------------------------------------------------
+    def on_clic_bus(self, b):
+        """
+        À appeler quand le joueur clique manuellement sur un bus.
+        Avance hint_idx si c'est le bon bus, sinon réinitialise le hint.
+        """
+        b_hint = self.bus_du_prochain_coup(self._buses)
+        if b is b_hint:
+            self.hint_idx += 1
+        else:
+            self.solution_coups = []
